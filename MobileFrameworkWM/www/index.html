@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ENG">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Framework</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href='http://fonts.googleapis.com/css?family=Droid+Serif|Montserrat' rel='stylesheet' type='text/css'>
+</head>
+
+<body>
+
+<!-- application title bar -->
+<nav>
+<ul class="tabs">
+    <li class="tab"><a href="#home" data-role="pagelink" id="homeI" class="activetab">Home</a></li>
+    <li class="tab"><a href="#location" data-role="pagelink" id="locationI" class="">Map</a></li>
+    <li class="tab"><a href="#contacts" data-role="pagelink" id="contactI" class="">Contact</a></li>
+</ul>
+</nav>
+
+<div data-role="page" id="home" class="">
+    <h3>Welcome to my App</h3>
+  <div data-role="content" id="homeContent">
+    <p>This app is awesome! I've made it all my self with a little help from the internet and the magical people of Algonquin college. Here is a poem I feel symbolizes this app's greatness: </p>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum consectetur, nisi ac porta sollicitudin, erat justo volutpat nisi, eu commodo justo mauris vel eros. Vivamus bibendum nisl nec ipsum malesuada aliquam. Sed ultrices vulputate ligula, quis maximus nulla ultrices ut. Duis placerat lorem ut ex fermentum accumsan. Vivamus malesuada risus in viverra lacinia. Aliquam erat volutpat. Pellentesque eget dolor aliquam, eleifend risus et, scelerisque felis.</p>
+  </div>
+</div>
+    
+<div data-role="page" id="location" class="hidden">
+     <h3>This is your Current Location</h3>
+  <div data-role="content" id="geoContent">
+   
+    
+  </div>
+</div>
+
+<div data-role="page" id="contacts" class="hidden">
+    <h3>Random Contact Info</h3>
+  <div data-role="content" id="conContent">
+    
+  </div>
+</div>
+<script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+<script type="text/javascript">
+    
+   
+    // JavaScript Document\\
+var pages = [], links=[];
+var numLinks = 0;
+var numPages = 0;
+var pageTime = 800;
+
+var pageshow = document.createEvent("CustomEvent");
+pageshow.initEvent("pageShow", false, true);
+
+document.addEventListener("DOMContentLoaded", function(){
+    
+	pages = document.querySelectorAll('[data-role="page"]');	
+	numPages = pages.length;
+	links = document.querySelectorAll('[data-role="pagelink"]');
+	numLinks = links.length;
+    
+    
+    
+	for(var i=0;i<numLinks; i++){
+		//either add a touch or click listener
+     if(detectTouchSupport( )){
+         //alert("Touch support detected");
+       links[i].addEventListener("touchend", handleTouch, false);
+     }
+		links[i].addEventListener("click", handleNav, false);	
+	}
+  
+  for(var p=0; p < numPages; p++){
+    pages[p].addEventListener("pageShow", handlePageShow, false);
+  }
+	loadPage(null);
+
+  
+});
+    
+
+//handle the touchend event
+function handleTouch(ev){
+   // alert("touch");
+  ev.preventDefault();
+  ev.stopImmediatePropagation();
+  var touch = ev.changedTouches[0];        //this is the first object touched
+  var newEvt = document.createEvent("MouseEvent");	
+  //old method works across browsers, though it is deprecated.
+  newEvt.initMouseEvent("click", true, true, window, 1, touch.screenX, touch.screenY, touch.clientX, touch.clientY);
+  ev.currentTarget.dispatchEvent(newEvt);
+  //send the touch to the click handler
+}
+
+//handle the click event
+function handleNav(ev){
+	ev.preventDefault();
+	var href = ev.target.href;
+	var parts = href.split("#");
+	loadPage( parts[1] );	
+  return false;
+}
+    
+/********PAGE FUNCTIONS********/
+   
+    
+function handlePageShow(ev){
+    
+  ev.target.className = "active";    
+    
+document.addEventListener("deviceready", function(){
+    
+//alert("deviceready");     
+  
+    //console.log(ev.currentTarget.id);
+    
+  if(ev.currentTarget.id === "location"){
+          //alert("location function");
+          
+    /*********Geolocation Function*********/
+      
+    if( navigator.geolocation ){ 
+        
+        
+        
+     /*Debugging code*/
+     //console.log("navagator.geolocation works");
+      
+    var params = {enableHighAccuracy: false, timeout:30000, maximumAge:0};
+    
+    navigator.geolocation.getCurrentPosition( reportPosition, gpsError, params ); 
+
+    /*Debugging code*/
+     console.log("navagator.geolocation.GetCurrentPosition works");
+        
+    }
+         
+    else{
+     
+     var element = document.createElement("p");
+     var text = document.createTextNode("Sorry Geolocation NOT Supported...");
+        element.appendChild(text);
+
+    var paragraph = document.getElementById('geoContent');
+        paragraph.appendChild(element);
+        
+    }
+        
+    function reportPosition(position){ 
+      
+      var lat = position.coords.latitude;
+      var long = position.coords.longitude;
+       
+        console.log(lat);
+        console.log(long);
+        
+      var googleMap = document.createElement('img');
+        googleMap.setAttribute('src', 'https://maps.googleapis.com/maps/api/staticmap?center=' + lat + ',' + long + '&zoom=14&size=380x380&keyAIzaSyC3kmkvYfeiwu7ctQZTH-JJKBpCEzBkNA8&markers=size:large%7Ccolor:red%7C' + lat + ',' + long);
+        googleMap.setAttribute('alt', 'na');
+        
+        var place = document.getElementById('geoContent');
+        place.appendChild(googleMap);
+        
+    }
+
+    function gpsError( error ){   
+      var errors = {
+          1: 'Permission denied',
+          2: 'Position unavailable',
+          3: 'Request timeout'
+    };
+      alert("Error: " + errors[error.code]);
+    }    
+        
+    //ev.target.className = "active";
+  }
+  else if(ev.currentTarget.id === "contacts"){
+      
+     // alert("id contacts");
+    //*******Contact Function*******//
+  
+       
+    if( navigator.contacts ){
+        
+       // alert("navigator.contacts");
+        
+        function successFunc( matches ){
+            
+            //alert("successFunc");
+                    
+       // alert("for matches.length");
+      
+    var randomContact = matches[(Math.round(Math.random() * matches.length -1))];
+        
+       // alert("randomcontact");
+     
+    var output = document.getElementById('conContent');
+        output.innerHTML += "<p> Contact Name: " + randomContact.displayName + "</p>";
+       // + "Phone Number: " + randomContact.phoneNumbers + "&deg;<br/>"
+        //+ "Addresses: " + randomContact.addresses + "m<br/>"
+       // + "Email: " + randomContact.emails + " m<br/>"
+       // + "Birthday: " + randomContact.birthday; 
+        //alert("contact name output");
+    
+        }
+          
+       function errFunc (){
+           alert("errFunc");
+       }
+        
+    var options = new ContactFindOptions( );
+       // alert("varoptions");
+      options.filter = "";  
+      options.multiple = true;
+      var filter = ["displayName"];
+      navigator.contacts.find(filter, successFunc, errFunc, options);
+        
+    }
+    
+    else{
+        
+        alert("not supported");
+     
+     var element = document.createElement("p");
+     var text = document.createTextNode("Sorry Contacts NOT Supported...");
+        element.appendChild(text);
+
+    var paragraph = document.getElementById('conContent');
+        paragraph.appendChild(element);
+          
+      }
+
+      
+}
+      
+    //ev.target.className = "active";
+  
+  else{
+      
+      var output = document.getElementById('homeContent');
+        output.innerHTML += "<p>This app is awesome! I've made it all my self with a little help from the internet and the magical people of Algonquin college. Here is a poem I feel symbolizes this app's greatness: </p> <br/>"
+       + "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum consectetur, nisi ac porta sollicitudin, erat justo volutpat nisi, eu commodo justo mauris vel eros. Vivamus bibendum nisl nec ipsum malesuada aliquam. Sed ultrices vulputate ligula, quis maximus nulla ultrices ut. Duis placerat lorem ut ex fermentum accumsan. Vivamus malesuada risus in viverra lacinia. Aliquam erat volutpat. Pellentesque eget dolor aliquam, eleifend risus et, scelerisque felis.</p> <br/>";
+      
+      
+      
+   
+    //ev.target.className = "active";
+      
+  } 
+
+},false);    
+    
+}
+//Deal with history API and switching divs
+function loadPage( url ){
+	if(url == null){
+        //home page first call
+		pages[0].className = 'active';
+		history.replaceState(null, null, "#home");	
+	}else{
+    for(var i=0; i < numPages; i++){
+      pages[i].className = "hidden";
+      if(pages[i].id == url){
+        document.getElementById("homeContent").innerHTML = "";
+        document.getElementById("conContent").innerHTML = "";
+        document.getElementById("geoContent").innerHTML = "";
+        pages[i].className = "show";
+        //add active to the proper page
+        history.pushState(null, null, "#" + url);
+        setTimeout(addDispatch, 50, i);
+      }
+    }
+    for(var t=0; t < numLinks; t++){
+      links[t].className = "";
+      if(links[t].href == location.href){
+        links[t].className = "activetab";
+      }
+    }
+	}
+}
+
+//Test for browser support of touch events
+function detectTouchSupport( ){
+  msGesture = navigator && navigator.msPointerEnabled && navigator.msMaxTouchPoints > 0 && MSGesture;
+  var touchSupport = (("ontouchstart" in window) || msGesture || (window.DocumentTouch && document instanceof DocumentTouch));
+  return touchSupport;
+}
+function addDispatch(num){
+  pages[num].dispatchEvent(pageshow);
+  //num is the value i from the setTimeout call
+  //using the value here is creating a closure
+}    
+
+    
+</script>
+</body>
+</html>
